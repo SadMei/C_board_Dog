@@ -1,0 +1,11 @@
+//
+// Created by cr on 22-9-12.
+//
+
+#ifndef STM32F407IGH6TR_BOARD_LEDIO_H
+#define STM32F407IGH6TR_BOARD_LEDIO_H
+
+void LEDIO_ConfigInit();
+
+
+#endif //STM32F407IGH6TR_BOARD_LEDIO_H
