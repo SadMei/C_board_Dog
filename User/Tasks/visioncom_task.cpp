@@ -54,14 +54,16 @@ void VisionComTask(void const* argument)
 	/* Infinite loop */
 	for (;;)
 	{
-		for (int i = 0; i < Dog.Motor_Num; ++i)
-		{
-			Dog.Motors[i].GetTorques();
-			Dog.Motors[i].Get_EncoderEstimates();
-		}
 		CurrentTime = xTaskGetTickCount();
+//		for (int i = 0; i < Dog.Motor_Num; ++i)
+//		{
+//			Dog.Motors[i].GetTorques();
+//			vTaskDelayUntil(&CurrentTime, 5 / portTICK_RATE_MS);
+//			Dog.Motors[i].Get_EncoderEstimates();
+//			vTaskDelayUntil(&CurrentTime, 5 / portTICK_RATE_MS);
+//		}
 		VisionChattingLoop();
-		vTaskDelayUntil(&CurrentTime, 10 / portTICK_RATE_MS);
+		vTaskDelayUntil(&CurrentTime, 5 / portTICK_RATE_MS);
 	}
 	/* USER CODE END VisionComTask */
 }

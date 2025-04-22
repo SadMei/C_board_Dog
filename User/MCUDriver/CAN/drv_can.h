@@ -57,6 +57,7 @@ typedef enum
 
 typedef enum
 {
+//	NONE = 0x00, //未定义
 	Idle = 0x01,
 	Run = 0x08,
 
@@ -81,7 +82,7 @@ typedef enum
 	Velocity = 0x02,
 	Position = 0x03,
 
-	None = 0,
+	None = 0, //闲置
 	Straight = 0x01,
 	Velocity_Ramp = 0x02,
 	Position_Filt = 0x03,
@@ -105,17 +106,21 @@ class drv_canC
 	void Get_EncoderEstimates();
 
 	//收到的电机信息
-	void GetMotorMsg(CAN_HandleTypeDef* hcan);
+	void GetMotorMsg(CAN_HandleTypeDef* hcan, CAN_RxHeaderTypeDef RxMeg, uint8_t aData[]);
 	float Motor_AngleRad;
 	float Motor_SpeedRadSec;
 	float Motor_Torque;
 	uint8_t Motor_State;
+	float Motor_AngleUpLimit;
+	float Motor_AngleLowerLimit;
+	float Motor_AngleTarget;
 
 	//初始化时的信息
 	uint8_t Motor_Type = small; //这里要写判断对应减速比等等
 	uint8_t Motor_ID; //电机对应的id
 	CAN_HandleTypeDef* Motor_CanLine = &hcan1;
-	drv_canC(uint8_t Motor_ID, uint8_t Motor_Type, CAN_HandleTypeDef* Motor_CanLine): Motor_ID(Motor_ID), Motor_Type(Motor_Type), Motor_CanLine(Motor_CanLine){}; //初始化列表
+	drv_canC(uint8_t Motor_ID, uint8_t Motor_Type, CAN_HandleTypeDef* Motor_CanLine,float Motor_AngleUpLimit,float Motor_AngleLowerLimit):
+		Motor_ID(Motor_ID), Motor_Type(Motor_Type), Motor_CanLine(Motor_CanLine),Motor_AngleUpLimit(Motor_AngleUpLimit),Motor_AngleLowerLimit(Motor_AngleLowerLimit){}; //初始化列表
  private:
 	uint8_t send_data[8];
 	CAN_TxHeaderTypeDef tx_msg;

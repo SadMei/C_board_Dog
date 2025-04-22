@@ -62,8 +62,8 @@ void BSP_Init(void)
 
 	MX_TIM10_Init();
 	MX_TIM5_Init();
-	MX_IWDG_Init();
-	MX_FREERTOS_Init();
+//	MX_IWDG_Init();
+//	MX_FREERTOS_Init();
 }
 /* USER CODE END PM */
 

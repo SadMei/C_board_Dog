@@ -8,18 +8,30 @@
 class chassisC
 {
  public:
-	drv_canC Motors[3];//包含类
+	drv_canC Motors[12];//包含类
 	chassisC() : Motors
 					 {
-						 { 0x01, small, &hcan1 },//{CANID,TYPE,CANLINE}
-						 { 0x02, small, &hcan1 },
-						 { 0x03, small, &hcan1 },
+						 { 0x01, small, &hcan1 ,-30,-100},//{CANID,TYPE,CANLINE,UP,LOW}
+						 { 0x02, small, &hcan1 ,80,-50},
+						 { 0x03, small, &hcan1 ,-15,-80},
+
+						 { 0x04, small, &hcan1 ,0,0},//{CANID,TYPE,CANLINE,UP,LOW}
+						 { 0x05, small, &hcan1 ,0,0},
+						 { 0x06, small, &hcan1 ,0,0},
+
+						 { 0x01, small, &hcan2 ,0,0},//{CANID,TYPE,CANLINE,UP,LOW}
+						 { 0x02, small, &hcan2 ,0,0},
+						 { 0x03, small, &hcan2 ,0,0},
+
+						 { 0x04, small, &hcan2 ,0,0},//{CANID,TYPE,CANLINE,UP,LOW}
+						 { 0x05, small, &hcan2 ,0,0},
+						 { 0x06, small, &hcan2 ,0,0},
 					 }{};
 
 	void Controlloop();
 	void Printf_Test();
 	void Init();
-	uint8_t Motor_Num = 3;
+	uint8_t Motor_Num = 12;
  private:
 
 };

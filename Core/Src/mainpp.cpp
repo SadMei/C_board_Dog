@@ -19,9 +19,12 @@ void User_Init()
 
 	delay_init();
 	DWT_Init(168);
-	Dog.Init();
 	PID_initialize();
+
+	Dog.Init();
 	usart_printf("Program start!\r\n");
+
+	MX_FREERTOS_Init();
 	osKernelStart();
 }
 

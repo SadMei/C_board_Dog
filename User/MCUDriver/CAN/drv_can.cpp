@@ -12,10 +12,17 @@
 //drv_canC motor1(0x01),motor2(0x02),motor3(0x03);
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)  //接收回调函数
 {
+	uint8_t recvData[8];
+	CAN_RxHeaderTypeDef RxMeg;
+	HAL_StatusTypeDef HAL_Status = HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxMeg, recvData);
 	//回调函数,读取各个电机信息
-	for (int i = 0; i < Dog.Motor_Num; ++i)
+
+	if(HAL_Status == HAL_OK)
 	{
-		Dog.Motors[i].GetMotorMsg(hcan);
+		for (int i = 0; i < Dog.Motor_Num; ++i)
+		{
+			Dog.Motors[i].GetMotorMsg(hcan,RxMeg,recvData);
+		}
 	}
 }
 
@@ -63,12 +70,9 @@ void CAN_All_Init(void)
 }
 
 //以下为瓴新电机测试用
-void drv_canC::GetMotorMsg(CAN_HandleTypeDef* hcan)
+void drv_canC::GetMotorMsg(CAN_HandleTypeDef* hcan,	CAN_RxHeaderTypeDef RxMeg, uint8_t recvData[])
 {
-	uint8_t recvData[8];
-	CAN_RxHeaderTypeDef RxMeg;
-	HAL_StatusTypeDef HAL_Status = HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxMeg, recvData);
-	if (HAL_Status == HAL_OK && RxMeg.StdId >> 5 == Motor_ID && hcan == Motor_CanLine)
+	if (RxMeg.StdId >> 5 == Motor_ID && hcan == Motor_CanLine)
 	{
 		switch (RxMeg.StdId & 0x01F)//取低五位判断收消息的类别
 		{
@@ -85,14 +89,13 @@ void drv_canC::GetMotorMsg(CAN_HandleTypeDef* hcan)
 			}
 			case Get_Torques:
 			{
-//				usart_printf("1");
-				memcpy(&Motor_Torque,recvData+4,4);
+				memcpy(&Motor_Torque,recvData + 4,4);
 				break;
 			}
 			case Get_Encoder_Estimates:
 			{
 				memcpy(&Motor_AngleRad,recvData,4);
-				memcpy(&Motor_SpeedRadSec,recvData+4,4);
+				memcpy(&Motor_SpeedRadSec,recvData + 4,4);
 				break;
 			}
 		}
@@ -124,18 +127,7 @@ void drv_canC::GetTorques()
 	tx_msg.StdId = SetID(Motor_ID, Get_Torques);
 	tx_msg.IDE = CAN_ID_STD;
 	tx_msg.RTR = CAN_RTR_DATA;
-	tx_msg.DLC = 0x08;
-	send_data[0] = 0x00;
-	send_data[1] = 0x00;
-
-	send_data[2] = 0x00;
-	send_data[3] = 0x00;
-
-	send_data[4] = 0x00;
-	send_data[5] = 0x00;
-
-	send_data[6] = 0x00;
-	send_data[7] = 0x00;
+	tx_msg.DLC = 0x00;
 	CAN_TxMessage(Motor_CanLine, &tx_msg, send_data);
 }
 
@@ -144,18 +136,7 @@ void drv_canC::Get_EncoderEstimates()
 	tx_msg.StdId = SetID(Motor_ID, Get_Encoder_Estimates);
 	tx_msg.IDE = CAN_ID_STD;
 	tx_msg.RTR = CAN_RTR_DATA;
-	tx_msg.DLC = 0x08;
-	send_data[0] = 0x00;
-	send_data[1] = 0x00;
-
-	send_data[2] = 0x00;
-	send_data[3] = 0x00;
-
-	send_data[4] = 0x00;
-	send_data[5] = 0x00;
-
-	send_data[6] = 0x00;
-	send_data[7] = 0x00;
+	tx_msg.DLC = 0x00;
 	CAN_TxMessage(Motor_CanLine, &tx_msg, send_data);
 }
 
@@ -246,6 +227,16 @@ void drv_canC::SetMotorPosition(float Target_Position)
 	tx_msg.IDE = CAN_ID_STD;
 	tx_msg.RTR = CAN_RTR_DATA;
 	tx_msg.DLC = 0x08;
+
+//	if(Target_Position >= Motor_AngleUpLimit)
+//	{
+//		Target_Position =  Motor_AngleUpLimit;
+//	}
+//	else if(Target_Position <= Motor_AngleLowerLimit)
+//	{
+//		Target_Position =  Motor_AngleLowerLimit;
+//	}
+
 	Target_Position = Target_Position *  3.1415926f / 180.0f;
 	float_transfer = *(uint32_t*)&Target_Position;//指针方式
 	send_data[0] = float_transfer;
