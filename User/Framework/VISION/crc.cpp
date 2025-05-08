@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "crc.h"
+#include "debugc.h"
 
 const uint16_t CRC16_INIT = 0xFFFF;
 
@@ -45,9 +46,8 @@ uint16_t Get_CRC16_Check_Sum(const uint8_t* pchMessage, uint32_t dwLength, uint1
 	{
 		ch_data = *pchMessage++;
 		(wCRC) =
-				((uint16_t)(wCRC) >> 8) ^ W_CRC_TABLE[((uint16_t)(wCRC) ^ (uint16_t)(ch_data)) & 0x00ff];
+			((uint16_t)(wCRC) >> 8) ^ W_CRC_TABLE[((uint16_t)(wCRC) ^ (uint16_t)(ch_data)) & 0x00ff];
 	}
-
 	return wCRC;
 }
 
@@ -64,6 +64,7 @@ uint32_t Verify_CRC16_Check_Sum(const uint8_t* pchMessage, uint32_t dwLength)
 	if ((pchMessage == nullptr) || (dwLength <= 2)) return false;
 
 	w_expected = Get_CRC16_Check_Sum(pchMessage, dwLength - 2, CRC16_INIT);
+//	usart_printf("%d,%d,%d,%d\r\n",w_expected & 0xff,(w_expected >> 8) & 0xff,pchMessage[dwLength - 2],pchMessage[dwLength - 1]);
 	return (
 			(w_expected & 0xff) == pchMessage[dwLength - 2] &&
 					((w_expected >> 8) & 0xff) == pchMessage[dwLength - 1]);

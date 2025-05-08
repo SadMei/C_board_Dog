@@ -12,6 +12,7 @@ void CAN_Filter_Init(CAN_HandleTypeDef* hcan);
 
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
+
 typedef enum
 {
 	Heartbeat = 0x01,

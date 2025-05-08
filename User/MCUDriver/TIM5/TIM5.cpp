@@ -5,6 +5,7 @@
 #include "drv_can.h"
 #include "debugc.h"
 #include "INS_task.h"
+#include "chassisc.h"
 extern TIM_HandleTypeDef htim5;
 //extern TIM_HandleTypeDef htim1;
 
@@ -12,7 +13,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
 	if (htim == &htim5)
 	{
-//		Gimbal_ControlLoop();
+		Dog.Controlloop();
+		Dog.Printf_Test();
 	}
 }
 

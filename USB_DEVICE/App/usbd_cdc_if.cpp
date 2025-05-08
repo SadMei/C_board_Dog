@@ -263,22 +263,36 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   */
 
 ReceivePacket vision_pkt;
+uint16_t received_bytes = 0, CDC_Checker = 0, Last_CDC_Checker; //拼接数据用
+uint8_t received_buffer[2048];
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t* Len)
 {
 	/* USER CODE BEGIN 6 */
 	USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
 	USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-
-	uint32_t crc = Verify_CRC16_Check_Sum(Buf, sizeof(ReceivePacket)); //crc校验
-	// usart_printf("%x,%d\r\n",crc, Get_CRC16_Check_Sum(Buf,sizeof(ReceivePacket)-2,0xFFFF));
-	// usart_printf("%s\r\n", Buf);
-	// uint8_t data[] = {0xD9, 0xAF, 0x3B, 0x3C, 0xA1, 0xB1, 0xF1, 0xBF};
-
-	if (crc)
+	if (received_bytes < sizeof(ReceivePacket))
 	{
-		vision_pkt = fromVector(Buf);//校验成功
-		// usart_printf("%f,%f\r\n", vision_pkt.x, vision_pkt.y);
+		memcpy(received_buffer + received_bytes, Buf, *Len);
+		received_bytes += *Len;
 	}
+	else
+	{
+		received_bytes = 0;
+		if (received_buffer[0] == 0xA5)
+		{
+			uint32_t crc = Verify_CRC16_Check_Sum(received_buffer, sizeof(ReceivePacket)); //crc校验
+			if (crc)
+			{
+				vision_pkt = fromVector(received_buffer);//校验成功
+			}
+			CDC_Checker++;
+			if (CDC_Checker >= 10000)
+			{
+				CDC_Checker = 0;
+			}
+		}
+	}
+
 	return (USBD_OK);
 	/* USER CODE END 6 */
 }

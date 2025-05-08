@@ -15,8 +15,6 @@
 #include "usbd_cdc_if.h"
 #include "usbd_cdc.h"
 #include "chassisc.h"
-int32_t id = 0;
-
 /*
 	* @name   VisionChattingLoop
 	* @brief  视觉通信循环
@@ -25,20 +23,36 @@ int32_t id = 0;
 */
 SendPacket send_packet;
 uint8_t Buf[sizeof(SendPacket)];
-uint8_t New_Buf[sizeof(Buf)+1];
 void VisionChattingLoop()
 {
-	//
+	//这里放包
+	for (int i = 0; i < 4; ++i)
+	{
+		send_packet.imu.quaternion[i] = INS.q[i];
+	}
+	for (int i = 0; i < 3; ++i)
+	{
+		send_packet.imu.accelerometer[i] = INS.Accel[i];
+		send_packet.imu.gyroscope[i] = INS.Gyro[i];
 
+	}
+	send_packet.imu.rpy[0] = INS.Roll;
+	send_packet.imu.rpy[1] = INS.Pitch;
+	send_packet.imu.rpy[2] = INS.Yaw;
+
+	for (int i = 0; i < Dog.Motor_Num; ++i)
+	{
+		send_packet.motorState[i].q = Dog.Motors[i].Motor_AngleRad;
+		send_packet.motorState[i].dq = Dog.Motors[i].Motor_SpeedRadSec;
+	}
+
+	send_packet.tick++;
 	//
 	std::copy(reinterpret_cast<const uint8_t*>(&send_packet),
 		reinterpret_cast<const uint8_t*>(&send_packet) + sizeof (SendPacket),Buf);
 	Append_CRC16_Check_Sum(Buf, sizeof(SendPacket));
-	memcpy(New_Buf, Buf, sizeof(SendPacket));
-	New_Buf[sizeof(SendPacket)] = '\n';
-	CDC_Transmit_FS(New_Buf, sizeof(Buf)+1);
-	id++;
-	//这里放发送的函数
+	CDC_Transmit_FS(Buf, sizeof(SendPacket));
+//	usart_printf("%d\r\n",sizeof(SendPacket));
 }
 
 /*
@@ -55,15 +69,9 @@ void VisionComTask(void const* argument)
 	for (;;)
 	{
 		CurrentTime = xTaskGetTickCount();
-//		for (int i = 0; i < Dog.Motor_Num; ++i)
-//		{
-//			Dog.Motors[i].GetTorques();
-//			vTaskDelayUntil(&CurrentTime, 5 / portTICK_RATE_MS);
-//			Dog.Motors[i].Get_EncoderEstimates();
-//			vTaskDelayUntil(&CurrentTime, 5 / portTICK_RATE_MS);
-//		}
-		VisionChattingLoop();
-		vTaskDelayUntil(&CurrentTime, 5 / portTICK_RATE_MS);
+		VisionChattingLoop();//5ms一帧
+		Dog.SafeChecker();
+		vTaskDelayUntil(&CurrentTime, 2 / portTICK_RATE_MS);
 	}
 	/* USER CODE END VisionComTask */
 }

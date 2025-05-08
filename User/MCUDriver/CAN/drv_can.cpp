@@ -78,6 +78,7 @@ void drv_canC::GetMotorMsg(CAN_HandleTypeDef* hcan,	CAN_RxHeaderTypeDef RxMeg, u
 		{
 			case Heartbeat:
 			{
+				Motor_State = recvData[4];
 				break;
 			}
 			case Mit_Control:

@@ -20,9 +20,10 @@ void GimbalControlTask(void const* argument)
 	for (;;)
 	{
 		CurrentTime = xTaskGetTickCount();
-		Dog.Controlloop();
-		Dog.Printf_Test();
-		vTaskDelayUntil(&CurrentTime, 5 / portTICK_RATE_MS);
+		//º”»ÎµÙœﬂºÏ≤‚
+		Dog.SafeBuilder();
+
+		vTaskDelayUntil(&CurrentTime, 10 / portTICK_RATE_MS);
 	}
 	/* USER CODE END GimbalControlTask */
 }
