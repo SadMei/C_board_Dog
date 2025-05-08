@@ -31,6 +31,7 @@ void chassisC::Init()
 			{
 				Motors[i].SetMotorMode(Position, Position_Filt);
 				HAL_Delay(10);
+
 				Motors[i].SetMotorState(Run);
 				HAL_Delay(10);
 			}
@@ -102,7 +103,7 @@ void chassisC::SafeBuilder()
 			{
 				while (Motors[i].Motor_State != 8 || Motors[i].Motor_AngleRad == 0)
 				{
-					Motors[i].SetMotorMode(Position, Position_Filt);
+					Motors[i].SetMotorMode(Position, Trapezoidal_Curve);
 					osDelay(1);
 					Motors[i].SetMotorState(Run);
 					osDelay(1);
@@ -118,8 +119,10 @@ void chassisC::SafeBuilder()
 		osDelay(1000);
 		//大腿
 
+		osDelay(1000);
 		//小腿
 
+		osDelay(1000);
 		//这里的延时可能还要随时回来检查mode是否为safe
 		permit_communication = 1;
 	}
