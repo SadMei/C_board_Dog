@@ -25,11 +25,12 @@ SendPacket send_packet;
 uint8_t Buf[sizeof(SendPacket)];
 void VisionChattingLoop()
 {
-	//这里放包
+	//这里放包 q是 wxyz or xyzw
 	for (int i = 0; i < 4; ++i)
 	{
-		send_packet.imu.quaternion[i] = INS.q[i];
+		send_packet.imu.quaternion[i] = INS.q[i];//xyz
 	}
+
 	for (int i = 0; i < 3; ++i)
 	{
 		send_packet.imu.accelerometer[i] = INS.Accel[i];
@@ -42,17 +43,17 @@ void VisionChattingLoop()
 
 	for (int i = 0; i < Dog.Motor_Num; ++i)
 	{
-		send_packet.motorState[i].q = Dog.Motors[i].Motor_AngleRad;
-		send_packet.motorState[i].dq = Dog.Motors[i].Motor_SpeedRadSec;
+		send_packet.motorState[i].q = Dog.Motors[i].signer * (Dog.Motors[i].Motor_AngleRad - Dog.Motors[i].stand_angle_rad);
+		send_packet.motorState[i].dq = Dog.Motors[i].signer * Dog.Motors[i].Motor_SpeedRadSec;
 	}
 
 	send_packet.tick++;
-	//
+
 	std::copy(reinterpret_cast<const uint8_t*>(&send_packet),
 		reinterpret_cast<const uint8_t*>(&send_packet) + sizeof (SendPacket),Buf);
 	Append_CRC16_Check_Sum(Buf, sizeof(SendPacket));
 	CDC_Transmit_FS(Buf, sizeof(SendPacket));
-//	usart_printf("%d\r\n",sizeof(SendPacket));
+
 }
 
 /*
@@ -71,7 +72,7 @@ void VisionComTask(void const* argument)
 		CurrentTime = xTaskGetTickCount();
 		VisionChattingLoop();//5ms一帧
 		Dog.SafeChecker();
-		vTaskDelayUntil(&CurrentTime, 2 / portTICK_RATE_MS);
+		vTaskDelayUntil(&CurrentTime, 5 / portTICK_RATE_MS);
 	}
 	/* USER CODE END VisionComTask */
 }

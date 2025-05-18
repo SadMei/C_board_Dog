@@ -229,16 +229,29 @@ void drv_canC::SetMotorPosition(float Target_Position)
 	tx_msg.RTR = CAN_RTR_DATA;
 	tx_msg.DLC = 0x08;
 
-//	if(Target_Position >= Motor_AngleUpLimit)
+//	if(signer == 1)
 //	{
-//		Target_Position =  Motor_AngleUpLimit;
+//		if(Target_Position >= stand_angle_rad + signer * Motor_AngleUpLimit)
+//		{
+//			Target_Position =  stand_angle_rad + signer * Motor_AngleUpLimit;
+//		}
+//		else if(Target_Position <= stand_angle_rad + signer * Motor_AngleLowerLimit)
+//		{
+//			Target_Position =  stand_angle_rad + signer * Motor_AngleLowerLimit;
+//		}
 //	}
-//	else if(Target_Position <= Motor_AngleLowerLimit)
+//	else if(signer == -1)
 //	{
-//		Target_Position =  Motor_AngleLowerLimit;
+//		if(Target_Position <= stand_angle_rad + signer * Motor_AngleUpLimit)
+//		{
+//			Target_Position =  stand_angle_rad + signer * Motor_AngleUpLimit;
+//		}
+//		else if(Target_Position >= stand_angle_rad + signer * Motor_AngleLowerLimit)
+//		{
+//			Target_Position =  stand_angle_rad + signer * Motor_AngleLowerLimit;
+//		}
 //	}
 
-	Target_Position = Target_Position *  3.1415926f / 180.0f;
 	float_transfer = *(uint32_t*)&Target_Position;//指针方式
 	send_data[0] = float_transfer;
 	send_data[1] = float_transfer >> 8;

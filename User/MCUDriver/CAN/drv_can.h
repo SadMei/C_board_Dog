@@ -120,8 +120,10 @@ class drv_canC
 	uint8_t Motor_Type = small; //这里要写判断对应减速比等等
 	uint8_t Motor_ID; //电机对应的id
 	CAN_HandleTypeDef* Motor_CanLine = &hcan1;
-	drv_canC(uint8_t Motor_ID, uint8_t Motor_Type, CAN_HandleTypeDef* Motor_CanLine,float Motor_AngleUpLimit,float Motor_AngleLowerLimit):
-		Motor_ID(Motor_ID), Motor_Type(Motor_Type), Motor_CanLine(Motor_CanLine),Motor_AngleUpLimit(Motor_AngleUpLimit),Motor_AngleLowerLimit(Motor_AngleLowerLimit){}; //初始化列表
+	int8_t signer = 1;
+	float stand_angle,lay_angle,stand_angle_rad,lay_angle_rad;
+	drv_canC(uint8_t Motor_ID, uint8_t Motor_Type, CAN_HandleTypeDef* Motor_CanLine,float Motor_AngleUpLimit,float Motor_AngleLowerLimit,int8_t signer,float stand_angle,float lay_angle):
+		Motor_ID(Motor_ID), Motor_Type(Motor_Type), Motor_CanLine(Motor_CanLine),Motor_AngleLowerLimit(Motor_AngleLowerLimit),Motor_AngleUpLimit(Motor_AngleUpLimit),signer(signer),stand_angle(stand_angle),lay_angle(lay_angle){}; //初始化列表
  private:
 	uint8_t send_data[8];
 	CAN_TxHeaderTypeDef tx_msg;
