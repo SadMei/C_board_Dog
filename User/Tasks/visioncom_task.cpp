@@ -28,23 +28,29 @@ void VisionChattingLoop()
 	//这里放包 q是 wxyz or xyzw
 	for (int i = 0; i < 4; ++i)
 	{
-		send_packet.imu.quaternion[i] = INS.q[i];//xyz
+		send_packet.imu.quaternion[i] = INS.q[i];//xyzw
 	}
 
 	for (int i = 0; i < 3; ++i)
 	{
-		send_packet.imu.accelerometer[i] = INS.Accel[i];
-		send_packet.imu.gyroscope[i] = INS.Gyro[i];
+//		send_packet.imu.accelerometer[i] = INS.Accel[i];
+		send_packet.imu.gyroscope[i] = get_gyro_data_point()[i];
 
 	}
-	send_packet.imu.rpy[0] = INS.Roll;
-	send_packet.imu.rpy[1] = INS.Pitch;
-	send_packet.imu.rpy[2] = INS.Yaw;
+
+//	send_packet.imu.rpy[0] = INS.Roll;
+//	send_packet.imu.rpy[1] = INS.Pitch;
+//	send_packet.imu.rpy[2] = INS.Yaw;
 
 	for (int i = 0; i < Dog.Motor_Num; ++i)
 	{
 		send_packet.motorState[i].q = Dog.Motors[i].signer * (Dog.Motors[i].Motor_AngleRad - Dog.Motors[i].stand_angle_rad);
 		send_packet.motorState[i].dq = Dog.Motors[i].signer * Dog.Motors[i].Motor_SpeedRadSec;
+		if(i == 2 || i == 8 || i == 5 || i == 11)
+		{
+			send_packet.motorState[i].q = send_packet.motorState[i].q / 1.553;
+			send_packet.motorState[i].dq = 	send_packet.motorState[i].dq / 1.553;
+		}
 	}
 
 	send_packet.tick++;

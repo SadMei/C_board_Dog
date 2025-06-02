@@ -56,7 +56,7 @@ void chassisC::SafeChecker()
 		online_timer = 0;
 	}
 
-	if (online_timer > 500)
+	if (online_timer > 100)
 	{
 		is_online = 0;
 		online_timer = 0;
@@ -71,6 +71,7 @@ void chassisC::SafeBuilder()
 {
 	if (mode == SAFE)
 	{
+		permit_communication = 0;
 		for (int i = 0; i < Motor_Num; ++i)
 		{
 			//while
@@ -80,7 +81,6 @@ void chassisC::SafeBuilder()
 				osDelay(1);
 			}
 		}
-		permit_communication = 0;
 	}
 	else if (mode == MOTION && last_mode == SAFE)
 	{
@@ -149,7 +149,7 @@ void chassisC::SafeBuilder()
 			}
 		}
 		osDelay(1000);
-		//大腿
+//		//大腿
 		for (int i = 0; i < Motor_Num; ++i)
 		{
 			//while
@@ -180,7 +180,7 @@ void chassisC::SafeBuilder()
 			}
 		}
 		osDelay(4000);
-		//这里的延时可能还要随时回来检查mode是否为safe
+//		//这里的延时可能还要随时回来检查mode是否为safe
 		permit_communication = 0;
 	}
 	else if (mode == MOTION && permit_communication == 0)
@@ -256,6 +256,7 @@ void chassisC::Printf_Test()
 		Motors[8].Motor_AngleRad * 180.0f / 3.1415926,Motors[9].Motor_AngleRad * 180.0f / 3.1415926,
 		Motors[10].Motor_AngleRad * 180.0f / 3.1415926,Motors[11].Motor_AngleRad * 180.0f / 3.1415926,
 		mode, CDC_Checker ,permit_communication);
+//	usart_printf("%f\r\n",Motors[0].Motor_SpeedRadSec);
 //	usart_printf("%d\r\n",mode);
 //	usart_printf(
 //		"%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d\r\n",
@@ -266,5 +267,6 @@ void chassisC::Printf_Test()
 //		vision_pkt.motorCmd[8].q, vision_pkt.motorCmd[9].q,
 //		vision_pkt.motorCmd[10].q, vision_pkt.motorCmd[11].q, mode
 //	);
-//	usart_printf("%f,%f,%f\r\n",INS.Gyro[0],INS.Gyro[1],INS.Gyro[2]);
+//	usart_printf("%f,%f,%f,%f\r\n",INS.q[0],INS.q[1],INS.q[2],INS.q[3]);
+//	usart_printf("%f,%f,%f,%f,%f,%f\r\n",INS.Gyro[0],get_gyro_data_point()[0],INS.Gyro[1],get_gyro_data_point()[1],INS.Gyro[2],get_gyro_data_point()[2]);
 }

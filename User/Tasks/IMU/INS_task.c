@@ -47,8 +47,8 @@
 #define IMU_temp_PWM(pwm)  imu_pwm_set(pwm)                    //pwm给定
 
 #define BMI088_BOARD_INSTALL_SPIN_MATRIX    \
+    {1.0f, 0.0f, 0.0f},                     \
     {0.0f, 1.0f, 0.0f},                     \
-    {-1.0f, 0.0f, 0.0f},                     \
     {0.0f, 0.0f, 1.0f}                      \
 
 
@@ -287,6 +287,10 @@ void INS_task(void const* pvParameters)
 #if cheat              //作弊 可以让yaw很稳定 去掉比较小的值
 				if (fabsf(bmi088_real_data.gyro[2]) < 0.02f)
 					bmi088_real_data.gyro[2] = 0;
+				if (fabsf(bmi088_real_data.gyro[0]) < 0.02f)
+					bmi088_real_data.gyro[0] = 0;
+				if (fabsf(bmi088_real_data.gyro[1]) < 0.02f)
+					bmi088_real_data.gyro[1] = 0;
 #endif
 
 				INS.Accel[X] = bmi088_real_data.accel[X];
