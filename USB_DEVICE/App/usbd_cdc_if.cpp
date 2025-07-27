@@ -26,6 +26,7 @@
 #include "debugc.h"
 #include "crc.h"
 #include "packet.hpp"
+#include "chassisc.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -263,7 +264,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   */
 
 ReceivePacket vision_pkt;
-uint16_t received_bytes = 0, CDC_Checker = 0, Last_CDC_Checker; //拼接数据用
+uint16_t received_bytes = 0, CDC_Checker = 101; //拼接数据用
 uint8_t received_buffer[2048];
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t* Len)
 {
@@ -284,10 +285,10 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t* Len)
 			if (crc)
 			{
 				vision_pkt = fromVector(received_buffer);//校验成功
-			}
-			CDC_Checker++;
-			if (CDC_Checker >= 10000)
-			{
+				for (int i = 0; i < 12; ++i)
+				{
+					if(i == 2 || i == 8 || i == 5 || i == 11) vision_pkt.motorCmd[i].q = vision_pkt.motorCmd[i].q * 2;
+				}
 				CDC_Checker = 0;
 			}
 		}

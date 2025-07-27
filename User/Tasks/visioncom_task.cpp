@@ -44,12 +44,12 @@ void VisionChattingLoop()
 
 	for (int i = 0; i < Dog.Motor_Num; ++i)
 	{
-		send_packet.motorState[i].q = Dog.Motors[i].signer * (Dog.Motors[i].Motor_AngleRad - Dog.Motors[i].stand_angle_rad);
+		send_packet.motorState[i].q = Dog.Motors[i].signer * (Dog.Motors[i].Motor_AngleRad - Dog.Motors[i].lay_angle_rad);
 		send_packet.motorState[i].dq = Dog.Motors[i].signer * Dog.Motors[i].Motor_SpeedRadSec;
 		if(i == 2 || i == 8 || i == 5 || i == 11)
 		{
-			send_packet.motorState[i].q = send_packet.motorState[i].q / 1.553;
-			send_packet.motorState[i].dq = 	send_packet.motorState[i].dq / 1.553;
+			send_packet.motorState[i].q = send_packet.motorState[i].q / 2;
+			send_packet.motorState[i].dq = 	send_packet.motorState[i].dq / 2;
 		}
 	}
 
@@ -78,7 +78,7 @@ void VisionComTask(void const* argument)
 		CurrentTime = xTaskGetTickCount();
 		VisionChattingLoop();//5msһ֡
 		Dog.SafeChecker();
-		vTaskDelayUntil(&CurrentTime, 5 / portTICK_RATE_MS);
+		vTaskDelayUntil(&CurrentTime, 2 / portTICK_RATE_MS);
 	}
 	/* USER CODE END VisionComTask */
 }

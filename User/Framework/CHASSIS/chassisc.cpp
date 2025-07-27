@@ -13,8 +13,10 @@ void chassisC::Init()
 	HAL_Delay(2000);
 	for (int i = 0; i < Motor_Num; ++i)
 	{
-		Motors[i].stand_angle_rad = Motors[i].stand_angle * 3.1415926 / 180.0f;
 		Motors[i].lay_angle_rad = Motors[i].lay_angle * 3.1415926 / 180.0f;
+//		Motors[i].stand_angle_rad = Motors[i].stand_angle * 3.1415926 / 180.0f;
+		Motors[i].stand_angle_rad = Motors[i].lay_angle_rad + Motors[i].signer * Motors[i].stand_angle;
+		//这里改成上电默认torque run
 		if (mode == SAFE)
 		{
 			while (Motors[i].Motor_AngleRad == 0)
@@ -44,24 +46,30 @@ void chassisC::Init()
 void chassisC::SafeChecker()
 {
 	//某个电机掉线也可以加上
-
+	CDC_Checker++;
 	//
-	if (CDC_Checker == Last_CDC_Checker)
+	if (CDC_Checker >= 100)
 	{
-		online_timer++;
+//		online_timer++;
+		is_online = 0;
 	}
 	else
 	{
 		is_online = 1;
-		online_timer = 0;
+//		online_timer = 0;
 	}
 
-	if (online_timer > 100)
+	if (CDC_Checker >= 1000)
 	{
-		is_online = 0;
-		online_timer = 0;
+		CDC_Checker = 101;
 	}
-	Last_CDC_Checker = CDC_Checker;
+
+//	if (online_timer > 100)
+//	{
+//		is_online = 0;
+//		online_timer = 0;
+//	}
+//	Last_CDC_Checker = CDC_Checker;
 
 	//此处可能需要更改
 	mode = is_online;
@@ -72,11 +80,28 @@ void chassisC::SafeBuilder()
 	if (mode == SAFE)
 	{
 		permit_communication = 0;
+		if(last_mode == MOTION)
+		{
+			for (int i = 0; i < Motor_Num; ++i)
+			{
+				for (int j = 0; j < 3; ++j)
+				{
+					Motors[i].SetMotorMode(Torque, Torque_Ramp);
+					osDelay(1);
+					Motors[i].SetMotorState(Idle);
+					osDelay(1);
+				}
+			}
+		}
+
 		for (int i = 0; i < Motor_Num; ++i)
 		{
-			//while
 			while (Motors[i].Motor_State != 1)
 			{
+				Motors[i].SetMotorMode(Torque, Torque_Ramp);
+				osDelay(1);
+				Motors[i].SetMotorState(Run);
+				osDelay(1);
 				Motors[i].SetMotorState(Idle);
 				osDelay(1);
 			}
@@ -104,6 +129,10 @@ void chassisC::SafeBuilder()
 					osDelay(1);
 					Motors[i].SetMotorState(Run);
 					osDelay(1);
+					if (mode == SAFE)
+					{
+						return;
+					}
 				}
 			}
 		}
@@ -134,6 +163,10 @@ void chassisC::SafeBuilder()
 					osDelay(1);
 					Motors[i].SetMotorState(Run);
 					osDelay(1);
+					if (mode == SAFE)
+					{
+						return;
+					}
 				}
 			}
 		}
@@ -165,6 +198,10 @@ void chassisC::SafeBuilder()
 					osDelay(1);
 					Motors[i].SetMotorState(Run);
 					osDelay(1);
+					if (mode == SAFE)
+					{
+						return;
+					}
 				}
 			}
 		}
@@ -185,18 +222,26 @@ void chassisC::SafeBuilder()
 	}
 	else if (mode == MOTION && permit_communication == 0)
 	{
+		//切换到这里的时候会抖一下
 		for (int i = 0; i < Motor_Num; ++i)
 		{
-			Motors[i].SetMotorMode(Position, Position_Filt);
-			osDelay(1);
-			Motors[i].SetMotorState(Run);
-			osDelay(1);
+			for (int j = 0; j < 5; ++j)
+			{
+				Motors[i].SetMotorMode(Position, Position_Filt);
+				osDelay(1);
+				Motors[i].SetMotorState(Run);
+				osDelay(1);
+			}
 			while (Motors[i].Motor_State != 8 || Motors[i].Motor_AngleRad == 0)
 			{
 				Motors[i].SetMotorMode(Position, Position_Filt);
 				osDelay(1);
 				Motors[i].SetMotorState(Run);
 				osDelay(1);
+				if (mode == SAFE)
+				{
+					return;
+				}
 			}
 		}
 		permit_communication = 1;
@@ -208,6 +253,7 @@ bool flag = 0;
 void chassisC::Controlloop()
 {
 //	FeedDog();
+//	permit_communication = 1;
 	if (permit_communication && is_online)
 	{
 		if( flag == 0 )
@@ -217,8 +263,8 @@ void chassisC::Controlloop()
 			{
 				if( i == 0 || i == 1 || i == 2 || i == 6 || i == 7 || i == 8 )
 				{
-					if(i == 2 || i == 8) vision_pkt.motorCmd[i].q = vision_pkt.motorCmd[i].q *1.553;
-					Motors[i].Motor_AngleTarget = Motors[i].stand_angle_rad + Motors[i].signer * vision_pkt.motorCmd[i].q;
+//					if(i == 2 || i == 8) vision_pkt.motorCmd[i].q = vision_pkt.motorCmd[i].q * 2;
+					Motors[i].Motor_AngleTarget = Motors[i].lay_angle_rad + Motors[i].signer * vision_pkt.motorCmd[i].q;
 					Motors[i].SetMotorPosition(Motors[i].Motor_AngleTarget);
 				}
 
@@ -231,8 +277,8 @@ void chassisC::Controlloop()
 			{
 				if( i == 3 || i == 4 || i == 5 || i == 9 || i == 10 || i == 11 )
 				{
-					if(i == 5 || i == 11) vision_pkt.motorCmd[i].q = vision_pkt.motorCmd[i].q *1.553;
-					Motors[i].Motor_AngleTarget = Motors[i].stand_angle_rad + Motors[i].signer * vision_pkt.motorCmd[i].q;
+//					if(i == 5 || i == 11) vision_pkt.motorCmd[i].q = vision_pkt.motorCmd[i].q * 2;
+					Motors[i].Motor_AngleTarget = Motors[i].lay_angle_rad + Motors[i].signer * vision_pkt.motorCmd[i].q;
 					Motors[i].SetMotorPosition(Motors[i].Motor_AngleTarget);
 				}
 			}
@@ -242,20 +288,41 @@ void chassisC::Controlloop()
 
 void chassisC::Printf_Test()
 {
+	float signer_checker[12];
+	for (int i = 0; i < 12; ++i)
+	{
+		signer_checker[i] = Motors[i].signer*(Motors[i].Motor_AngleRad - Motors[i].lay_angle_rad);
+	}
 //	usart_printf("%f,%f,%f\r\n",Motors[2].Motor_AngleRad*180/3.1415926,Motors[2].Motor_SpeedRadSec,Motors[2].Motor_Torque);
 //	usart_printf("%d\r\n",Motors[2].Motor_ID);
 //	usart_printf("%f,%f,%f\r\n",Motors[0].Motor_AngleRad*180/3.1415926,Motors[1].Motor_AngleRad*180/3.1415926,Motors[2].Motor_AngleRad*180/3.1415926);
 //	usart_printf("%f,%f,%f\r\n",Motors[3].Motor_AngleRad*180/3.1415926,Motors[4].Motor_AngleRad*180/3.1415926,Motors[5].Motor_AngleRad*180/3.1415926);
 //	usart_printf("%f,%f,%f\r\n",Motors[6].Motor_AngleRad*180/3.1415926,Motors[7].Motor_AngleRad*180/3.1415926,Motors[8].Motor_AngleRad*180/3.1415926);
 //	usart_printf("%f,%f,%f\r\n",Motors[9].Motor_AngleRad*180/3.1415926,Motors[10].Motor_AngleRad*180/3.1415926,Motors[11].Motor_AngleRad*180/3.1415926);
-	usart_printf("%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d\r\n",
-		Motors[0].Motor_AngleRad * 180.0f / 3.1415926,Motors[1].Motor_AngleRad * 180.0f / 3.1415926,
-		Motors[2].Motor_AngleRad * 180.0f / 3.1415926,Motors[3].Motor_AngleRad * 180.0f / 3.1415926,
-		Motors[4].Motor_AngleRad * 180.0f / 3.1415926,Motors[5].Motor_AngleRad * 180.0f / 3.1415926,
-		Motors[6].Motor_AngleRad * 180.0f / 3.1415926,Motors[7].Motor_AngleRad * 180.0f / 3.1415926,
-		Motors[8].Motor_AngleRad * 180.0f / 3.1415926,Motors[9].Motor_AngleRad * 180.0f / 3.1415926,
-		Motors[10].Motor_AngleRad * 180.0f / 3.1415926,Motors[11].Motor_AngleRad * 180.0f / 3.1415926,
+	usart_printf("%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d\r\n",
+		Motors[1].Motor_AngleTarget * 180.0f / 3.1415926,Motors[1].Motor_AngleRad * 180.0f / 3.1415926,
+		Motors[2].Motor_AngleTarget * 180.0f / 3.1415926,Motors[2].Motor_AngleRad * 180.0f / 3.1415926,
+		Motors[4].Motor_AngleTarget * 180.0f / 3.1415926,Motors[4].Motor_AngleRad * 180.0f / 3.1415926,
+		Motors[5].Motor_AngleTarget * 180.0f / 3.1415926,Motors[5].Motor_AngleRad * 180.0f / 3.1415926,
+		Motors[7].Motor_AngleTarget * 180.0f / 3.1415926,Motors[7].Motor_AngleRad * 180.0f / 3.1415926,
+		Motors[8].Motor_AngleTarget * 180.0f / 3.1415926,Motors[8].Motor_AngleRad * 180.0f / 3.1415926,
+		Motors[10].Motor_AngleTarget * 180.0f / 3.1415926,Motors[10].Motor_AngleRad * 180.0f / 3.1415926,
+		Motors[11].Motor_AngleTarget * 180.0f / 3.1415926,Motors[11].Motor_AngleRad * 180.0f / 3.1415926,
 		mode, CDC_Checker ,permit_communication);
+//	usart_printf("%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d\r\n",
+//		Motors[0].Motor_AngleRad * 180.0f / 3.1415926,Motors[1].Motor_AngleRad * 180.0f / 3.1415926,
+//		Motors[2].Motor_AngleRad * 180.0f / 3.1415926,Motors[3].Motor_AngleRad * 180.0f / 3.1415926,
+//		Motors[4].Motor_AngleRad * 180.0f / 3.1415926,Motors[5].Motor_AngleRad * 180.0f / 3.1415926,
+//		Motors[6].Motor_AngleRad* 180.0f / 3.1415926,Motors[7].Motor_AngleRad * 180.0f / 3.1415926,
+//		Motors[8].Motor_AngleRad* 180.0f / 3.1415926,Motors[9].Motor_AngleRad * 180.0f / 3.1415926,
+//		Motors[10].Motor_AngleRad * 180.0f / 3.1415926,Motors[11].Motor_AngleRad * 180.0f / 3.1415926,
+//		mode, CDC_Checker ,permit_communication);
+//	usart_printf("%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d\r\n",
+//		signer_checker[0] ,signer_checker[1] ,signer_checker[2]/2,
+//		signer_checker[3] ,signer_checker[4] ,signer_checker[5]/2 ,
+//		signer_checker[6] ,signer_checker[7] ,signer_checker[8]/2,
+//		signer_checker[9] ,signer_checker[10] ,signer_checker[11]/2,
+//		mode, CDC_Checker ,permit_communication);
 //	usart_printf("%f\r\n",Motors[0].Motor_SpeedRadSec);
 //	usart_printf("%d\r\n",mode);
 //	usart_printf(
