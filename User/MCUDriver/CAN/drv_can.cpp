@@ -21,6 +21,22 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)  //接收回调�
 	{
 		for (int i = 0; i < Dog.Motor_Num; ++i)
 		{
+			Dog.Motors[i].online_timer ++;
+			if( Dog.Motors[i].online_timer > 100)
+			{
+				Dog.Motors[i].is_online = 0;
+			}
+			else
+			{
+				Dog.Motors[i].is_online = 1;
+			}
+			if( Dog.Motors[i].online_timer > 1000)
+			{
+				Dog.Motors[i].online_timer = 101;
+			}
+		}
+		for (int i = 0; i < Dog.Motor_Num; ++i)
+		{
 			Dog.Motors[i].GetMotorMsg(hcan,RxMeg,recvData);
 		}
 	}
@@ -95,6 +111,7 @@ void drv_canC::GetMotorMsg(CAN_HandleTypeDef* hcan,	CAN_RxHeaderTypeDef RxMeg, u
 			}
 			case Get_Encoder_Estimates:
 			{
+				online_timer = 0;
 				memcpy(&Motor_AngleRad,recvData,4);
 				memcpy(&Motor_SpeedRadSec,recvData + 4,4);
 				break;
@@ -268,3 +285,20 @@ void drv_canC::SetMotorPosition(float Target_Position)
 	CAN_TxMessage(Motor_CanLine, &tx_msg, send_data);
 }
 
+void drv_canC::SetMotorTorque(float Target_Torque)
+{
+	float_transfer = *(uint32_t*)&Target_Torque;//指针方式
+	send_data[0] = float_transfer;
+	send_data[1] = float_transfer >> 8;
+
+	send_data[2] = float_transfer >> 16;
+	send_data[3] = float_transfer >> 24; //位置目标值
+
+	send_data[4] = 0x00;
+	send_data[5] = 0x00;
+
+	send_data[6] = 0x00;
+	send_data[7] = 0x00;
+	float_transfer = 0;
+	CAN_TxMessage(Motor_CanLine, &tx_msg, send_data);
+}

@@ -57,7 +57,7 @@ include_directories(User/Framework/ User/Framework/PID User/Framework/REMOTEC Us
         User/Framework/ADRC User/Framework/JUDGE User/Framework/VISION User/Framework/FILTERS USB_DEVICE/App USB_DEVICE/Target
         User/LOG  User/Framework/IWDG/  User/MCUDriver/SERVO/ User/MCUDriver/IMU User/Framework/IMU User/Tasks/IMU
         User/Framework/IMU/algorithm User/Framework/IMU/algorithm/Include User/Framework/IMU/controller User/Framework/IMU/devices User/MCUDriver/SPI User/MCUDriver/DELAY
-        User/Framework/SMC User/Framework/RC_IMU User/Framework/CHASSIS)
+        User/Framework/SMC User/Framework/RC_IMU User/Framework/CHASSIS  User/Framework/PD)
 
 # global macro definition
 add_definitions(

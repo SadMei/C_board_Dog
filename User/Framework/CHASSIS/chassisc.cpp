@@ -17,28 +17,14 @@ void chassisC::Init()
 //		Motors[i].stand_angle_rad = Motors[i].stand_angle * 3.1415926 / 180.0f;
 		Motors[i].stand_angle_rad = Motors[i].lay_angle_rad + Motors[i].signer * Motors[i].stand_angle;
 		//这里改成上电默认torque run
-		if (mode == SAFE)
+		while (Motors[i].Motor_AngleRad == 0)
 		{
-			while (Motors[i].Motor_AngleRad == 0)
-			{
-				Motors[i].SetMotorMode(Torque, Torque_Ramp);
-				HAL_Delay(10);
-				Motors[i].SetMotorState(Run);
-				HAL_Delay(10);
-				Motors[i].SetMotorState(Idle);
-				HAL_Delay(10);
-			}
-		}
-		else if (mode == MOTION)
-		{
-			while (Motors[i].Motor_AngleRad == 0)
-			{
-				Motors[i].SetMotorMode(Position, Position_Filt);
-				HAL_Delay(10);
-
-				Motors[i].SetMotorState(Run);
-				HAL_Delay(10);
-			}
+			Motors[i].SetMotorMode(Torque, Torque_Ramp);
+			HAL_Delay(10);
+			Motors[i].SetMotorState(Run);
+			HAL_Delay(10);
+			Motors[i].SetMotorState(Idle);
+			HAL_Delay(10);
 		}
 	}
 }
@@ -64,13 +50,8 @@ void chassisC::SafeChecker()
 		CDC_Checker = 101;
 	}
 
-//	if (online_timer > 100)
-//	{
-//		is_online = 0;
-//		online_timer = 0;
-//	}
-//	Last_CDC_Checker = CDC_Checker;
-
+	is_online = is_online && Motors[0].is_online && Motors[1].is_online && Motors[2].is_online && Motors[3].is_online && Motors[4].is_online && Motors[5].is_online
+		&& Motors[6].is_online && Motors[7].is_online && Motors[8].is_online && Motors[9].is_online && Motors[10].is_online && Motors[11].is_online;
 	//此处可能需要更改
 	mode = is_online;
 }
@@ -227,17 +208,25 @@ void chassisC::SafeBuilder()
 		{
 			for (int j = 0; j < 5; ++j)
 			{
-				Motors[i].SetMotorMode(Position, Position_Filt);
-				osDelay(1);
+				Motors[i].SetMotorMode(Torque, Torque_Ramp);
+				HAL_Delay(10);
 				Motors[i].SetMotorState(Run);
-				osDelay(1);
+				HAL_Delay(10);
+//				Motors[i].SetMotorMode(Position, Position_Filt);
+//				osDelay(1);
+//				Motors[i].SetMotorState(Run);
+//				osDelay(1);
 			}
 			while (Motors[i].Motor_State != 8 || Motors[i].Motor_AngleRad == 0)
 			{
-				Motors[i].SetMotorMode(Position, Position_Filt);
-				osDelay(1);
+//				Motors[i].SetMotorMode(Position, Position_Filt);
+//				osDelay(1);
+//				Motors[i].SetMotorState(Run);
+//				osDelay(1);
+				Motors[i].SetMotorMode(Torque, Torque_Ramp);
+				HAL_Delay(10);
 				Motors[i].SetMotorState(Run);
-				osDelay(1);
+				HAL_Delay(10);
 				if (mode == SAFE)
 				{
 					return;
@@ -252,9 +241,7 @@ void chassisC::SafeBuilder()
 bool flag = 0;
 void chassisC::Controlloop()
 {
-//	FeedDog();
-//	permit_communication = 1;
-	if (permit_communication && is_online)
+	if (permit_communication)
 	{
 		if( flag == 0 )
 		{
@@ -263,9 +250,14 @@ void chassisC::Controlloop()
 			{
 				if( i == 0 || i == 1 || i == 2 || i == 6 || i == 7 || i == 8 )
 				{
-//					if(i == 2 || i == 8) vision_pkt.motorCmd[i].q = vision_pkt.motorCmd[i].q * 2;
-					Motors[i].Motor_AngleTarget = Motors[i].lay_angle_rad + Motors[i].signer * vision_pkt.motorCmd[i].q;
-					Motors[i].SetMotorPosition(Motors[i].Motor_AngleTarget);
+					if (is_online) Motors[i].Motor_AngleTarget = Motors[i].lay_angle_rad + Motors[i].signer * vision_pkt.motorCmd[i].q;
+
+					pd[i].P_T = Motors[i].Motor_AngleTarget;
+					pd[i].P_f = Motors[i].Motor_AngleRad;
+					pd[i].V_f = Motors[i].Motor_SpeedRadSec;
+					pd[i].Calc();
+
+					Motors[i].SetMotorTorque(pd[i].u);
 				}
 
 			}
@@ -277,9 +269,14 @@ void chassisC::Controlloop()
 			{
 				if( i == 3 || i == 4 || i == 5 || i == 9 || i == 10 || i == 11 )
 				{
-//					if(i == 5 || i == 11) vision_pkt.motorCmd[i].q = vision_pkt.motorCmd[i].q * 2;
-					Motors[i].Motor_AngleTarget = Motors[i].lay_angle_rad + Motors[i].signer * vision_pkt.motorCmd[i].q;
-					Motors[i].SetMotorPosition(Motors[i].Motor_AngleTarget);
+					if (is_online) Motors[i].Motor_AngleTarget = Motors[i].lay_angle_rad + Motors[i].signer * vision_pkt.motorCmd[i].q;
+
+					pd[i].P_T = Motors[i].Motor_AngleTarget;
+					pd[i].P_f = Motors[i].Motor_AngleRad;
+					pd[i].V_f = Motors[i].Motor_SpeedRadSec;
+					pd[i].Calc();
+
+					Motors[i].SetMotorTorque(pd[i].u);
 				}
 			}
 		}

@@ -58,7 +58,7 @@ typedef enum
 
 typedef enum
 {
-//	NONE = 0x00, //未定义
+//	NONE = 0x00,
 	Idle = 0x01,
 	Run = 0x08,
 
@@ -83,7 +83,7 @@ typedef enum
 	Velocity = 0x02,
 	Position = 0x03,
 
-	None = 0, //闲置
+	None = 0,
 	Straight = 0x01,
 	Velocity_Ramp = 0x02,
 	Position_Filt = 0x03,
@@ -95,18 +95,16 @@ typedef enum
 class drv_canC
 {
  public:
-	//输出给电机
 	void RebootMotor();
 	void ClearMotorError();
 	void SetMotorMode(uint8_t ControlMode,uint8_t InputMode);
 	void SetMotorState(uint8_t MotorState);
 	void SetMotorPosition(float Target_Position);
-
+	void SetMotorTorque(float Target_Torque);
 //	void MITControl();
 	void GetTorques();
 	void Get_EncoderEstimates();
 
-	//收到的电机信息
 	void GetMotorMsg(CAN_HandleTypeDef* hcan, CAN_RxHeaderTypeDef RxMeg, uint8_t aData[]);
 	float Motor_AngleRad;
 	float Motor_SpeedRadSec;
@@ -116,33 +114,34 @@ class drv_canC
 	float Motor_AngleLowerLimit;
 	float Motor_AngleTarget;
 
-	//初始化时的信息
-	uint8_t Motor_Type = small; //这里要写判断对应减速比等等
-	uint8_t Motor_ID; //电机对应的id
+	uint8_t Motor_Type = small;
+	uint8_t Motor_ID;
 	CAN_HandleTypeDef* Motor_CanLine = &hcan1;
 	int8_t signer = 1;
 	float stand_angle,lay_angle,stand_angle_rad,lay_angle_rad;
+	uint16_t online_timer = 101;
+	bool is_online = 0;
 	drv_canC(uint8_t Motor_ID, uint8_t Motor_Type, CAN_HandleTypeDef* Motor_CanLine,float Motor_AngleUpLimit,float Motor_AngleLowerLimit,int8_t signer,float stand_angle,float lay_angle):
-		Motor_ID(Motor_ID), Motor_Type(Motor_Type), Motor_CanLine(Motor_CanLine),Motor_AngleLowerLimit(Motor_AngleLowerLimit),Motor_AngleUpLimit(Motor_AngleUpLimit),signer(signer),stand_angle(stand_angle),lay_angle(lay_angle){}; //初始化列表
+		Motor_ID(Motor_ID), Motor_Type(Motor_Type), Motor_CanLine(Motor_CanLine),Motor_AngleLowerLimit(Motor_AngleLowerLimit),Motor_AngleUpLimit(Motor_AngleUpLimit),signer(signer),stand_angle(stand_angle),lay_angle(lay_angle){}; //锟斤拷始锟斤拷锟叫憋拷
  private:
 	uint8_t send_data[8];
 	CAN_TxHeaderTypeDef tx_msg;
-	uint32_t float_transfer = 0; //float转uint32用变量
-	///工具函数
+	uint32_t float_transfer = 0;
+
 	uint16_t SetID(uint8_t Motor_id, uint8_t CMD_id)
 	{
 		return (Motor_id << 5) + CMD_id;
 	}
-	///CAN自动选择邮箱发送
+
 	int CAN_TxMessage(CAN_HandleTypeDef* hcan, CAN_TxHeaderTypeDef* pHeader, uint8_t aData[])
 	{
 		uint8_t mailbox = 0;
 		uint32_t pTxMailbox[mailbox];
-		if (hcan->Instance->TSR & (1 << 26)) mailbox = 0;       //邮箱0为空
-		else if (hcan->Instance->TSR & (1 << 27)) mailbox = 1;  //邮箱1为空
-		else if (hcan->Instance->TSR & (1 << 28)) mailbox = 2;  //邮箱2为空
-		else return 0xFF;                                   //无空邮箱,无法发送
-		hcan->Instance->sTxMailBox[mailbox].TIR = 0;        //清除之前的设置
+		if (hcan->Instance->TSR & (1 << 26)) mailbox = 0;
+		else if (hcan->Instance->TSR & (1 << 27)) mailbox = 1;
+		else if (hcan->Instance->TSR & (1 << 28)) mailbox = 2;
+		else return 0xFF;
+		hcan->Instance->sTxMailBox[mailbox].TIR = 0;
 		HAL_CAN_AddTxMessage(hcan, pHeader, aData, pTxMailbox);
 		return mailbox;
 	}
